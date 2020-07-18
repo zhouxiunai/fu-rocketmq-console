@@ -23,8 +23,11 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.acl.common.AclClientRPCHook;
+import org.apache.rocketmq.acl.common.SessionCredentials;
 import org.apache.rocketmq.client.consumer.DefaultMQPullConsumer;
 import org.apache.rocketmq.client.consumer.PullResult;
+import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.common.MixAll;
 import org.apache.rocketmq.common.Pair;
 import org.apache.rocketmq.common.message.MessageExt;
@@ -32,13 +35,16 @@ import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.common.protocol.body.Connection;
 import org.apache.rocketmq.common.protocol.body.ConsumeMessageDirectlyResult;
 import org.apache.rocketmq.common.protocol.body.ConsumerConnection;
+import org.apache.rocketmq.console.config.RMQConfigure;
 import org.apache.rocketmq.console.exception.ServiceException;
 import org.apache.rocketmq.console.model.MessageView;
 import org.apache.rocketmq.console.service.MessageService;
+import org.apache.rocketmq.remoting.RPCHook;
 import org.apache.rocketmq.tools.admin.MQAdminExt;
 import org.apache.rocketmq.tools.admin.api.MessageTrack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -57,8 +63,12 @@ public class MessageServiceImpl implements MessageService {
      * @see org.apache.rocketmq.store.index.IndexService maxNum = Math.min(maxNum, this.defaultMessageStore.getMessageStoreConfig().getMaxMsgsNumBatch());
      */
     private final static int QUERY_MESSAGE_MAX_NUM = 64;
+
     @Resource
     private MQAdminExt mqAdminExt;
+
+    @Autowired
+    private RMQConfigure rMQConfigure;
 
     public Pair<MessageView, List<MessageTrack>> viewMessage(String subject, final String msgId) {
         try {
@@ -90,7 +100,15 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public List<MessageView> queryMessageByTopic(String topic, final long begin, final long end) {
-        DefaultMQPullConsumer consumer = new DefaultMQPullConsumer(MixAll.TOOLS_CONSUMER_GROUP, (String) null);
+        boolean aclEnabled = rMQConfigure.isAclEnabled();
+        DefaultMQPullConsumer consumer;
+        if (aclEnabled) {
+            consumer = new DefaultMQPullConsumer(null,MixAll.TOOLS_CONSUMER_GROUP, getAclRPCHook(rMQConfigure.getAccessKey(), rMQConfigure.getSecretKey()));
+        } else {
+            consumer = new DefaultMQPullConsumer(null,MixAll.TOOLS_CONSUMER_GROUP, null);
+        }
+
+
         List<MessageView> messageViewList = Lists.newArrayList();
         try {
             String subExpression = "*";
@@ -198,5 +216,7 @@ public class MessageServiceImpl implements MessageService {
         throw new IllegalStateException("NO CONSUMER");
 
     }
-
+    private RPCHook getAclRPCHook(String accessKey, String secretKey) {
+        return new AclClientRPCHook(new SessionCredentials(accessKey, secretKey));
+    }
 }
