@@ -92,7 +92,6 @@
 
     </dependencies>
     <build>
-        <finalName>fu-rocketmq-console</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
