@@ -1,5 +1,5 @@
 # fu-rocketmq-console
-rocketmq-console with acl 
+rocketmq-console with acl 4.7.x login
 
 #### 在rocketmq-console基础上加ACL验证,用于管理配置了安全验证的rocketmq
 
@@ -12,7 +12,7 @@ https://gitee.com/withcatandyou/rocketmq-console
 #### 2020.7
 1. 更新rocketmq到4.7.1
 2. 支持 acl
-2. 支持 登录
+3. 支持 登录
 
 ### quick start
 clone 项目 maven 打包 得到 fu-rocketmq-console.jar 文件
