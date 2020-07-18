@@ -63,7 +63,7 @@ rocketmq.config.loginRequired=false
 ```yml
 rocketmq.config.loginRequired=true
 ```
-![](.README_images/05e37f1e.png)
+![](./.README_images/05e37f1e.jpg)
 默认帐号:admin,密码:123456
 
 修改 users.properties
